@@ -43,7 +43,9 @@ def register(model, parent_attr='parent', left_attr='lft', right_attr='rght',
     opts.level_attr = level_attr
     opts.tree_manager_attr = tree_manager_attr
     if order_insertion_by is not None:
-        order_insertion_by = order_insertion_by.copy()
+        if isinstance(order_insertion_by, basestring):
+            order_insertion_by = [order_insertion_by]
+        order_insertion_by = list(order_insertion_by)
     opts.order_insertion_by = order_insertion_by
 
     # Add tree fields if they do not exist
