@@ -17,11 +17,17 @@ def get_ancestors(self, ascending=False):
         return self._tree_manager.none()
 
     opts = self._meta
-    return self._default_manager.filter(**{
-        '%s__lt' % opts.left_attr: getattr(self, opts.left_attr),
-        '%s__gt' % opts.right_attr: getattr(self, opts.right_attr),
-        opts.tree_id_attr: getattr(self, opts.tree_id_attr),
-    }).order_by('%s%s' % ({True: '-', False: ''}[ascending], opts.left_attr))
+    
+    order_by = opts.left_attr
+    if ascending:
+        order_by = '-%s' % order_by
+    
+    qs = self._tree_manager._mptt_filter(
+        left__lt=getattr(self, opts.left_attr),
+        right__gt=getattr(self, opts.right_attr),
+        tree_id=getattr(self, opts.tree_id_attr),
+    )
+    return qs.order_by(order_by)
 
 def get_children(self):
     """
@@ -36,9 +42,7 @@ def get_children(self):
     if self.is_leaf_node():
         return self._tree_manager.none()
 
-    return self._tree_manager.filter(**{
-        self._meta.parent_attr: self,
-    })
+    return self._tree_manager._mptt_filter(parent=self)
 
 def get_descendants(self, include_self=False):
     """

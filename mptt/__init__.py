@@ -1,4 +1,4 @@
-VERSION = (0, 3, 0)
+VERSION = (0, 4, 'pre')
 
 __all__ = ('register',)
 
@@ -33,6 +33,13 @@ def register(model, parent_attr='parent', left_attr='lft', right_attr='rght',
         raise AlreadyRegistered(
             _('The model %s has already been registered.') % model.__name__)
     registry.append(model)
+    
+    # Allow order_insertion_by to be either a string, a list/tuple or None
+    if order_insertion_by is not None:
+        if isinstance(order_insertion_by, basestring):
+            order_insertion_by = [order_insertion_by]
+        else:
+            order_insertion_by = list(order_insertion_by)
 
     # Add tree options to the model's Options
     opts = model._meta
@@ -47,7 +54,14 @@ def register(model, parent_attr='parent', left_attr='lft', right_attr='rght',
             order_insertion_by = [order_insertion_by]
         order_insertion_by = list(order_insertion_by)
     opts.order_insertion_by = order_insertion_by
-
+    opts.mptt_field_lookup_map = {
+        'parent': parent_attr,
+        'left': left_attr,
+        'right': right_attr,
+        'tree_id': tree_id_attr,
+        'level': level_attr,
+    }
+    
     # Add tree fields if they do not exist
     for attr in [left_attr, right_attr, tree_id_attr, level_attr]:
         try:
