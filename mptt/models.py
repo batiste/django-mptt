@@ -59,7 +59,6 @@ def get_descendants(self, include_self=False):
     else:
         filters['%s__gt' % opts.left_attr] = getattr(self, opts.left_attr)
         filters['%s__lt' % opts.left_attr] = getattr(self, opts.right_attr)
-    
     return self._tree_manager.filter(**filters)
 
 def get_descendant_count(self):
@@ -69,50 +68,22 @@ def get_descendant_count(self):
     return (getattr(self, self._meta.right_attr) -
             getattr(self, self._meta.left_attr) - 1) / 2
 
-def get_leafnodes(self, include_self=False):
-    """
-    Creates a ``QuerySet`` containing leafnodes of this model
-    instance, in tree order.
-
-    If ``include_self`` is ``True``, the ``QuerySet`` will also
-    include this model instance.
-    """
-    if not include_self and self.is_leaf_node():
-        return self._tree_manager.none()
-
-    if include_self and self.is_leaf_node():
-        # Isn't there a better way?
-        return self._tree_manager.filter(id=self.id)
-
-    opts = self._meta
-    filters = {opts.tree_id_attr: getattr(self, opts.tree_id_attr)}
-    if include_self:
-        filters['%s__range' % opts.left_attr] = (getattr(self, opts.left_attr),
-                                                 getattr(self, opts.right_attr))
-    else:
-        filters['%s__gt' % opts.left_attr] = getattr(self, opts.left_attr)
-        filters['%s__lt' % opts.left_attr] = getattr(self, opts.right_attr)
-
-    return self._tree_manager.filter(**filters).extra(
-        where=['%s-%s=1' % (self._meta.right_attr,
-                            self._meta.left_attr)])
-
-def get_next_sibling(self, **filters):
+def get_next_sibling(self):
     """
     Returns this model instance's next sibling in the tree, or
     ``None`` if it doesn't have a next sibling.
     """
     opts = self._meta
     if self.is_root_node():
-        filters.update({
+        filters = {
             '%s__isnull' % opts.parent_attr: True,
             '%s__gt' % opts.tree_id_attr: getattr(self, opts.tree_id_attr),
-        })
+        }
     else:
-        filters.update({
+        filters = {
              opts.parent_attr: getattr(self, '%s_id' % opts.parent_attr),
             '%s__gt' % opts.left_attr: getattr(self, opts.right_attr),
-        })
+        }
 
     sibling = None
     try:
@@ -121,23 +92,23 @@ def get_next_sibling(self, **filters):
         pass
     return sibling
 
-def get_previous_sibling(self, **filters):
+def get_previous_sibling(self):
     """
     Returns this model instance's previous sibling in the tree, or
     ``None`` if it doesn't have a previous sibling.
     """
     opts = self._meta
     if self.is_root_node():
-        filters.update({
+        filters = {
             '%s__isnull' % opts.parent_attr: True,
             '%s__lt' % opts.tree_id_attr: getattr(self, opts.tree_id_attr),
-        })
+        }
         order_by = '-%s' % opts.tree_id_attr
     else:
-        filters.update({
+        filters = {
              opts.parent_attr: getattr(self, '%s_id' % opts.parent_attr),
             '%s__lt' % opts.right_attr: getattr(self, opts.left_attr),
-        })
+        }
         order_by = '-%s' % opts.right_attr
 
     sibling = None

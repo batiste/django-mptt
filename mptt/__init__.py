@@ -42,6 +42,10 @@ def register(model, parent_attr='parent', left_attr='lft', right_attr='rght',
     opts.tree_id_attr = tree_id_attr
     opts.level_attr = level_attr
     opts.tree_manager_attr = tree_manager_attr
+    if order_insertion_by is not None:
+        if isinstance(order_insertion_by, basestring):
+            order_insertion_by = [order_insertion_by]
+        order_insertion_by = list(order_insertion_by)
     opts.order_insertion_by = order_insertion_by
 
     # Add tree fields if they do not exist
@@ -57,7 +61,6 @@ def register(model, parent_attr='parent', left_attr='lft', right_attr='rght',
     setattr(model, 'get_children', models.get_children)
     setattr(model, 'get_descendants', models.get_descendants)
     setattr(model, 'get_descendant_count', models.get_descendant_count)
-    setattr(model, 'get_leafnodes', models.get_leafnodes)
     setattr(model, 'get_next_sibling', models.get_next_sibling)
     setattr(model, 'get_previous_sibling', models.get_previous_sibling)
     setattr(model, 'get_root', models.get_root)
